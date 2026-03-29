@@ -42,8 +42,7 @@ jobs:
           push: ${{ inputs.push_images }}
           targets: nvidia-cache
 
-  build-public-images:
-    needs: [build-nvidia-cache]
+  build-core-images:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [cpu-core, amd-core, nvidia-core, nvidia-full]
+        target: [cpu-core, amd-core, nvidia-core]
     steps:
       - uses: actions/checkout@v4
       - name: Pre-create BuildKit volume on /mnt
@@ -79,3 +78,75 @@ jobs:
         with:
           push: ${{ inputs.push_images }}
           targets: ${{ matrix.target }}
+
+  build-nvidia-extensions:
+    needs: [build-nvidia-cache]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [nvidia-sageattention, nvidia-nunchaku, nvidia-xformers, nvidia-flashattention]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pre-create BuildKit volume on /mnt
+        run: |
+          sudo mkdir -p /mnt/buildkit-state
+          sudo docker volume create \
+            --driver local \
+            --opt type=none \
+            --opt device=/mnt/buildkit-state \
+            --opt o=bind \
+            buildx_buildkit_ci0_state
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          name: ci
+      - name: Log in to registry
+        if: ${{ inputs.push_images }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build ${{ matrix.target }}
+        uses: docker/bake-action@v6
+        with:
+          push: ${{ inputs.push_images }}
+          targets: ${{ matrix.target }}
+
+  build-nvidia-full:
+    needs: [build-nvidia-cache, build-core-images, build-nvidia-extensions]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pre-create BuildKit volume on /mnt
+        run: |
+          sudo mkdir -p /mnt/buildkit-state
+          sudo docker volume create \
+            --driver local \
+            --opt type=none \
+            --opt device=/mnt/buildkit-state \
+            --opt o=bind \
+            buildx_buildkit_ci0_state
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          name: ci
+      - name: Log in to registry
+        if: ${{ inputs.push_images }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build nvidia-full
+        uses: docker/bake-action@v6
+        with:
+          push: ${{ inputs.push_images }}
+          targets: nvidia-full

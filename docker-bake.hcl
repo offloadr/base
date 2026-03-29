@@ -65,8 +65,14 @@ target "nvidia-cache" {
         TORCH_FLAVOR     = "${NVIDIA_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-cache:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-cache:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    tags       = [
+        "${DOCKER_REGISTRY_URL}nvidia-cache:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
+        "${DOCKER_REGISTRY_URL}nvidia-builder:latest",
+    ]
+    cache-from = [
+        "type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-cache:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
+        "type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:latest",
+    ]
     cache-to   = ["type=inline"]
 }
 
@@ -76,7 +82,10 @@ target "nvidia-sageattention" {
     contexts = {
         builder = "target:nvidia-cache"
     }
-    platforms = ["linux/amd64"]
+    platforms  = ["linux/amd64"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:sageattention"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:sageattention"]
+    cache-to   = ["type=inline"]
 }
 
 target "nvidia-nunchaku" {
@@ -85,7 +94,10 @@ target "nvidia-nunchaku" {
     contexts = {
         builder = "target:nvidia-cache"
     }
-    platforms = ["linux/amd64"]
+    platforms  = ["linux/amd64"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku"]
+    cache-to   = ["type=inline"]
 }
 
 target "nvidia-xformers" {
@@ -94,7 +106,10 @@ target "nvidia-xformers" {
     contexts = {
         builder = "target:nvidia-cache"
     }
-    platforms = ["linux/amd64"]
+    platforms  = ["linux/amd64"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:xformers"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:xformers"]
+    cache-to   = ["type=inline"]
 }
 
 target "nvidia-flashattention" {
@@ -103,7 +118,10 @@ target "nvidia-flashattention" {
     contexts = {
         builder = "target:nvidia-cache"
     }
-    platforms = ["linux/amd64"]
+    platforms  = ["linux/amd64"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:flashattention"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:flashattention"]
+    cache-to   = ["type=inline"]
 }
 
 target "nvidia-core" {
