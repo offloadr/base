@@ -1,0 +1,61 @@
+# Offloadr Base Images
+
+This repository builds reusable hardware/runtime base images for downstream application images.
+
+## Published images
+
+The public image contract is:
+
+* `ghcr.io/offloadr/base/cpu-core`
+* `ghcr.io/offloadr/base/amd-core`
+* `ghcr.io/offloadr/base/nvidia-core`
+* `ghcr.io/offloadr/base/nvidia-full`
+
+An additional public cache image is also published for NVIDIA builder reuse:
+
+* `ghcr.io/offloadr/base/nvidia-cache`
+
+## Default tags
+
+The default immutable tags built by this repository are:
+
+* `cpu-core:py3.12-torch2.10.0-cpu`
+* `amd-core:py3.12-torch2.10.0-rocm7.1`
+* `nvidia-cache:py3.12-torch2.10.0-cuda13.0.2`
+* `nvidia-core:py3.12-torch2.10.0-cuda13.0.2`
+* `nvidia-full:py3.12-torch2.10.0-cuda13.0.2-full`
+
+## Runtime contract
+
+All published runtime images are expected to provide:
+
+* `WORKDIR /workspace`
+* a pre-created virtual environment at `/opt/venv`
+* `PATH` preferring `/opt/venv/bin`
+
+## NVIDIA variants
+
+`nvidia-core` contains CUDA, Python, `uv`, PyTorch, and the shared Python dependencies needed by the optional accelerator wheels.
+
+`nvidia-full` adds:
+
+* xFormers
+* FlashAttention-2
+* SageAttention2++
+* Nunchaku
+
+`nvidia-cache` is not intended as a downstream runtime base. It exists only to preserve the existing GHCR image-backed cache strategy for public GitHub runners.
+
+## Building
+
+Build everything locally:
+
+```shell
+docker buildx bake
+```
+
+Build a specific image:
+
+```shell
+docker buildx bake nvidia-full
+```

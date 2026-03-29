@@ -1,0 +1,15 @@
+name: Build base images on pull requests to main
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      push_images: false
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit

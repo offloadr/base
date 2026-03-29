@@ -1,0 +1,26 @@
+ARG NVIDIA_CORE_IMAGE=nvidia-core
+FROM ${NVIDIA_CORE_IMAGE}
+
+# Install pre-built SageAttention wheel
+COPY --from=sageattention /workspace/SageAttention/dist /tmp/wheels
+RUN --mount=type=cache,target=/cache/uv,sharing=locked \
+    uv pip install --python "${VIRTUAL_ENV}/bin/python" sageattention --no-deps --no-index --find-links /tmp/wheels && \
+    rm -rf /tmp/wheels
+
+# Install pre-built nunchaku wheel
+COPY --from=nunchaku /artifacts/nunchaku/dist /tmp/wheels
+RUN --mount=type=cache,target=/cache/uv,sharing=locked \
+    uv pip install --python "${VIRTUAL_ENV}/bin/python" nunchaku --no-deps --no-index --find-links /tmp/wheels && \
+    rm -rf /tmp/wheels
+
+# Install pre-built xformers wheel
+COPY --from=xformers /artifacts/xformers/dist /tmp/wheels
+RUN --mount=type=cache,target=/cache/uv,sharing=locked \
+    uv pip install --python "${VIRTUAL_ENV}/bin/python" xformers --no-deps --no-index --find-links /tmp/wheels && \
+    rm -rf /tmp/wheels
+
+# Install pre-built flash attention wheel
+COPY --from=flashattention /workspace/flash-attention/dist /tmp/wheels
+RUN --mount=type=cache,target=/cache/uv,sharing=locked \
+    uv pip install --python "${VIRTUAL_ENV}/bin/python" flash-attn --no-deps --no-index --find-links /tmp/wheels && \
+    rm -rf /tmp/wheels

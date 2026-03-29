@@ -1,0 +1,16 @@
+name: Build base images on pushes to main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      push_images: true
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
