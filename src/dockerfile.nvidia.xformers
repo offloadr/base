@@ -14,7 +14,7 @@ import urllib.request
 cuda_tag = os.environ["CUDA_TAG"]
 wheel = os.environ["XFORMERS_WHEEL"]
 dist = pathlib.Path("/artifacts/xformers/dist")
-url = f"https://download.pytorch.org/whl/{cuda_tag}/xformers/{wheel}"
+url = f"https://download.pytorch.org/whl/{cuda_tag}/{wheel}"
 print(url)
 urllib.request.urlretrieve(url, dist / wheel)
 PY
