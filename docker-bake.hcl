@@ -154,8 +154,8 @@ target "nvidia-full" {
         NVIDIA_CORE_IMAGE = "nvidia-core"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-full:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}-full"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-full:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}-full"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-full:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-full:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 

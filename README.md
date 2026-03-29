@@ -11,19 +11,14 @@ The public image contract is:
 * `ghcr.io/offloadr/base/nvidia-core`
 * `ghcr.io/offloadr/base/nvidia-full`
 
-An additional public cache image is also published for NVIDIA builder reuse:
-
-* `ghcr.io/offloadr/base/nvidia-cache`
-
 ## Default tags
 
 The default immutable tags built by this repository are:
 
 * `cpu-core:py3.12-torch2.10.0-cpu`
 * `amd-core:py3.12-torch2.10.0-rocm7.1`
-* `nvidia-cache:py3.12-torch2.10.0-cuda13.0.2`
 * `nvidia-core:py3.12-torch2.10.0-cuda13.0.2`
-* `nvidia-full:py3.12-torch2.10.0-cuda13.0.2-full`
+* `nvidia-full:py3.12-torch2.10.0-cuda13.0.2`
 
 ## Runtime contract
 
@@ -40,11 +35,9 @@ All published runtime images are expected to provide:
 `nvidia-full` adds:
 
 * xFormers
-* FlashAttention-3
+* FlashAttention 3
 * SageAttention2++
 * Nunchaku
-
-`nvidia-cache` is not intended as a downstream runtime base. It exists only to preserve the existing GHCR image-backed cache strategy for public GitHub runners.
 
 ## Building
 
