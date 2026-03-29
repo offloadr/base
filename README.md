@@ -40,7 +40,7 @@ All published runtime images are expected to provide:
 `nvidia-full` adds:
 
 * xFormers
-* FlashAttention-2
+* FlashAttention-3
 * SageAttention2++
 * Nunchaku
 

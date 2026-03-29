@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     rm -rf /tmp/wheels
 
 # Install pre-built flash attention wheel
-COPY --from=flashattention /workspace/flash-attention/dist /tmp/wheels
+COPY --from=flashattention /artifacts/flashattention/dist /tmp/wheels
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --python "${VIRTUAL_ENV}/bin/python" flash-attn --no-deps --no-index --find-links /tmp/wheels && \
+    uv pip install --python "${VIRTUAL_ENV}/bin/python" --no-deps /tmp/wheels/*.whl && \
     rm -rf /tmp/wheels

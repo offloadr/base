@@ -1,11 +1,11 @@
 FROM builder
 
-ARG XFORMERS_VERSION=0.0.34
+ARG XFORMERS_VERSION=0.0.35
 
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     mkdir -p /artifacts/xformers/dist && \
     export CUDA_TAG=$(python -c "import torch; print('cu' + torch.version.cuda.replace('.', ''))") && \
-    export XFORMERS_WHEEL=xformers-${XFORMERS_VERSION}-cp39-abi3-manylinux_2_28_x86_64.whl && \
+    export XFORMERS_WHEEL=xformers-${XFORMERS_VERSION}-py39-none-manylinux_2_28_x86_64.whl && \
     python - <<'PY'
 import os
 import pathlib
