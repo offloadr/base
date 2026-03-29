@@ -5,51 +5,16 @@ ARG XFORMERS_VERSION=0.0.34
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     mkdir -p /artifacts/xformers/dist && \
     export CUDA_TAG=$(python -c "import torch; print('cu' + torch.version.cuda.replace('.', ''))") && \
+    export XFORMERS_WHEEL=xformers-${XFORMERS_VERSION}-cp39-abi3-manylinux_2_28_x86_64.whl && \
     python - <<'PY'
 import os
 import pathlib
-import re
 import urllib.request
 
-from packaging.tags import sys_tags
-from packaging.utils import parse_wheel_filename
-
 cuda_tag = os.environ["CUDA_TAG"]
-version = os.environ["XFORMERS_VERSION"]
+wheel = os.environ["XFORMERS_WHEEL"]
 dist = pathlib.Path("/artifacts/xformers/dist")
-index_url = f"https://download.pytorch.org/whl/{cuda_tag}/xformers/"
-
-with urllib.request.urlopen(index_url) as response:
-    page = response.read().decode()
-
-candidates = sorted({
-    href.rsplit("/", 1)[-1]
-    for href in re.findall(r'href=["\']([^"\']+\.whl)["\']', page)
-    if f"xformers-{version}" in href and href.endswith("linux_x86_64.whl")
-})
-
-supported_tags = list(sys_tags())
-tag_order = {tag: index for index, tag in enumerate(supported_tags)}
-
-best_rank = None
-best_wheel = None
-for wheel in candidates:
-    _, _, _, wheel_tags = parse_wheel_filename(wheel)
-    compatible_ranks = [tag_order[tag] for tag in wheel_tags if tag in tag_order]
-    if not compatible_ranks:
-        continue
-
-    rank = min(compatible_ranks)
-    if best_rank is None or rank < best_rank:
-        best_rank = rank
-        best_wheel = wheel
-
-if best_wheel is None:
-    raise RuntimeError(
-        f"No compatible xformers wheel found for version {version} in {index_url}"
-    )
-
-url = f"{index_url}{best_wheel}"
+url = f"https://download.pytorch.org/whl/{cuda_tag}/xformers/{wheel}"
 print(url)
-urllib.request.urlretrieve(url, dist / best_wheel)
+urllib.request.urlretrieve(url, dist / wheel)
 PY
