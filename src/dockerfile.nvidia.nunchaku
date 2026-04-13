@@ -1,5 +1,7 @@
 FROM builder
 
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
 ARG NUNCHAKU_VERSION=v1.2.1
 
 # Download the prebuilt Nunchaku wheel matching this builder's Python and torch/CUDA versions

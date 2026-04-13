@@ -1,6 +1,8 @@
 ARG ROCM_IMAGE
 FROM ${ROCM_IMAGE}
 
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
 ARG PYTHON_VERSION
 ARG UV_VERSION
 ARG TORCH_VERSION

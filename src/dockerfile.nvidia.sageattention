@@ -1,5 +1,7 @@
 FROM builder
 
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
 ARG MAX_JOBS=2
 ARG NVCC_THREADS=4
 ARG SAGEATTENTION_REF=abi3_stable

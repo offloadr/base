@@ -1,5 +1,7 @@
 FROM builder
 
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
 ARG FLASH_ATTENTION_VERSION=3.0.0
 
 # Download the prebuilt FlashAttention 3 wheel matching this CUDA stack
