@@ -1,6 +1,8 @@
 ARG NVIDIA_CORE_IMAGE=nvidia-core
 FROM ${NVIDIA_CORE_IMAGE}
 
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
 # Install pre-built SageAttention wheel
 COPY --from=sageattention /workspace/SageAttention/dist /tmp/wheels
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \

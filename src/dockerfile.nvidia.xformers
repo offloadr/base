@@ -1,5 +1,7 @@
 FROM builder
 
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
 ARG XFORMERS_VERSION=0.0.35
 
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \

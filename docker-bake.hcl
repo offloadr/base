@@ -13,6 +13,9 @@ variable "UV_VERSION" {
 variable "TORCH_VERSION" {
     default = "2.10.0"
 }
+variable "TORCHVISION_VERSION" {
+    default = "0.25.0"
+}
 variable "NVIDIA_CUDA_VERSION" {
     default = "13.0.2"
 }
@@ -62,6 +65,7 @@ target "nvidia-cache" {
         PYTHON_VERSION   = "${PYTHON_VERSION}"
         UV_VERSION       = "${UV_VERSION}"
         TORCH_VERSION    = "${TORCH_VERSION}"
+        TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR     = "${NVIDIA_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
@@ -132,6 +136,7 @@ target "nvidia-core" {
         PYTHON_VERSION     = "${PYTHON_VERSION}"
         UV_VERSION         = "${UV_VERSION}"
         TORCH_VERSION      = "${TORCH_VERSION}"
+        TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR       = "${NVIDIA_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
@@ -167,6 +172,7 @@ target "cpu-core" {
         PYTHON_VERSION    = "${PYTHON_VERSION}"
         UV_VERSION        = "${UV_VERSION}"
         TORCH_VERSION     = "${TORCH_VERSION}"
+        TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR      = "${CPU_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
@@ -183,6 +189,7 @@ target "amd-core" {
         PYTHON_VERSION  = "${PYTHON_VERSION}"
         UV_VERSION      = "${UV_VERSION}"
         TORCH_VERSION   = "${TORCH_VERSION}"
+        TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR    = "${AMD_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
