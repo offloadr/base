@@ -25,8 +25,17 @@ The default immutable tags built by this repository are:
 All published runtime images are expected to provide:
 
 * `WORKDIR /workspace`
-* a pre-created virtual environment at `/opt/venv`
-* `PATH` preferring `/opt/venv/bin`
+* system `python`
+* `uv`
+* base Python dependencies installed into the system Python environment
+
+Downstream images that want their own virtual environment can layer one on top of the base image
+while still inheriting the preinstalled packages:
+
+```dockerfile
+RUN uv venv /opt/venv --system-site-packages
+ENV PATH="/opt/venv/bin:${PATH}"
+```
 
 ## NVIDIA variants
 

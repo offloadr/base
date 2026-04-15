@@ -31,19 +31,15 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
 # Configure uv cache to work with Docker BuildKit cache
 ENV UV_CACHE_DIR=/cache/uv
 ENV UV_LINK_MODE=copy
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
 # Set a neutral workspace for downstream application layers
 WORKDIR /workspace
 
-# Prepare the virtual environment
-RUN uv venv "${VIRTUAL_ENV}"
-
-# Install pytorch
+# Install PyTorch into the system Python environment
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     uv pip install \
-    --python "${VIRTUAL_ENV}/bin/python" \
+    --system \
+    --break-system-packages \
     torch==${TORCH_VERSION} \
     torchvision==${TORCHVISION_VERSION} \
     torchaudio==${TORCH_VERSION} \
