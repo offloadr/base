@@ -6,23 +6,23 @@ LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 # Install pre-built SageAttention wheel
 COPY --from=sageattention /workspace/SageAttention/dist /tmp/wheels
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --python "${VIRTUAL_ENV}/bin/python" sageattention --no-deps --no-index --find-links /tmp/wheels && \
+    uv pip install --system --break-system-packages sageattention --no-deps --no-index --find-links /tmp/wheels && \
     rm -rf /tmp/wheels
 
 # Install pre-built nunchaku wheel
 COPY --from=nunchaku /artifacts/nunchaku/dist /tmp/wheels
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --python "${VIRTUAL_ENV}/bin/python" nunchaku --no-deps --no-index --find-links /tmp/wheels && \
+    uv pip install --system --break-system-packages nunchaku --no-deps --no-index --find-links /tmp/wheels && \
     rm -rf /tmp/wheels
 
 # Install pre-built xformers wheel
 COPY --from=xformers /artifacts/xformers/dist /tmp/wheels
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --python "${VIRTUAL_ENV}/bin/python" xformers --no-deps --no-index --find-links /tmp/wheels && \
+    uv pip install --system --break-system-packages xformers --no-deps --no-index --find-links /tmp/wheels && \
     rm -rf /tmp/wheels
 
 # Install pre-built flash attention wheel
 COPY --from=flashattention /artifacts/flashattention/dist /tmp/wheels
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --python "${VIRTUAL_ENV}/bin/python" --no-deps /tmp/wheels/*.whl && \
+    uv pip install --system --break-system-packages --no-deps /tmp/wheels/*.whl && \
     rm -rf /tmp/wheels
