@@ -28,22 +28,30 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
     mv uv /usr/local/bin/uv && \
     rm -rf /tmp/uv.tar.gz
 
-# Configure uv cache to work with Docker BuildKit cache
-ENV UV_CACHE_DIR=/cache/uv
+# Configure uv for runtime offline installs from the baked cache
+ENV UV_CACHE_DIR=/opt/uv-cache
 ENV UV_LINK_MODE=copy
+ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
+ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
+ENV OFFLOADR_TORCH_FLAVOR=${TORCH_FLAVOR}
+ENV OFFLOADR_TORCH_INDEX_URL=https://download.pytorch.org/whl/${TORCH_FLAVOR}
 
 # Set a neutral workspace for downstream application layers
 WORKDIR /workspace
 
-# Install PyTorch into the system Python environment
-RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install \
-    --system \
-    --break-system-packages \
-    torch==${TORCH_VERSION} \
-    torchvision==${TORCHVISION_VERSION} \
-    torchaudio==${TORCH_VERSION} \
-    --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR}
+# Populate the baked uv cache without keeping packages in system Python
+RUN --mount=type=cache,id=offloadr-cpu-uv-build,target=/root/.cache/uv-build,sharing=locked \
+    UV_CACHE_DIR=/root/.cache/uv-build uv venv --python /usr/bin/python${PYTHON_VERSION} /tmp/offloadr-cache-venv && \
+    UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
+        --python /tmp/offloadr-cache-venv/bin/python \
+        torch==${TORCH_VERSION} \
+        torchvision==${TORCHVISION_VERSION} \
+        torchaudio==${TORCH_VERSION} \
+        --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR} && \
+    mkdir -p /opt/uv-cache && \
+    cp -a /root/.cache/uv-build/. /opt/uv-cache/ && \
+    rm -rf /tmp/offloadr-cache-venv && \
+    chmod -R a+rwX /opt/uv-cache
 
 # Mark this image as CPU-only for downstream entrypoints
 ENV OFFLOADR_FORCE_CPU=1

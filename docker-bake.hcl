@@ -8,7 +8,7 @@ variable "CPU_RUNTIME_IMAGE" {
     default = "ubuntu:24.04"
 }
 variable "UV_VERSION" {
-    default = "0.11.2"
+    default = "0.11.7"
 }
 variable "TORCH_VERSION" {
     default = "2.10.0"

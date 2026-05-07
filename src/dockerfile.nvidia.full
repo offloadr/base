@@ -3,26 +3,10 @@ FROM ${NVIDIA_CORE_IMAGE}
 
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
-# Install pre-built SageAttention wheel
-COPY --from=sageattention /workspace/SageAttention/dist /tmp/wheels
-RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --system --break-system-packages sageattention --no-deps --no-index --find-links /tmp/wheels && \
-    rm -rf /tmp/wheels
+ENV OFFLOADR_WHEELHOUSE=/opt/offloadr-wheelhouse
 
-# Install pre-built nunchaku wheel
-COPY --from=nunchaku /artifacts/nunchaku/dist /tmp/wheels
-RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --system --break-system-packages nunchaku --no-deps --no-index --find-links /tmp/wheels && \
-    rm -rf /tmp/wheels
-
-# Install pre-built xformers wheel
-COPY --from=xformers /artifacts/xformers/dist /tmp/wheels
-RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --system --break-system-packages xformers --no-deps --no-index --find-links /tmp/wheels && \
-    rm -rf /tmp/wheels
-
-# Install pre-built flash attention wheel
-COPY --from=flashattention /artifacts/flashattention/dist /tmp/wheels
-RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --system --break-system-packages --no-deps /tmp/wheels/*.whl && \
-    rm -rf /tmp/wheels
+# Keep optional accelerator wheels as an explicit offline install source
+COPY --from=sageattention /workspace/SageAttention/dist/ /opt/offloadr-wheelhouse/
+COPY --from=nunchaku /artifacts/nunchaku/dist/ /opt/offloadr-wheelhouse/
+COPY --from=xformers /artifacts/xformers/dist/ /opt/offloadr-wheelhouse/
+COPY --from=flashattention /artifacts/flashattention/dist/ /opt/offloadr-wheelhouse/
