@@ -16,7 +16,7 @@ The public image contract is:
 The default immutable tags built by this repository are:
 
 * `cpu-core:py3.12-torch2.10.0-cpu`
-* `amd-core:py3.12-torch2.10.0-rocm7.1`
+* `amd-core:py3.12-torch2.10.0-rocm7.1.1`
 * `nvidia-core:py3.12-torch2.10.0-cuda13.0.2`
 * `nvidia-full:py3.12-torch2.10.0-cuda13.0.2`
 
@@ -26,22 +26,19 @@ All published runtime images are expected to provide:
 
 * `WORKDIR /workspace`
 * system `python`
-* `uv`
-* base Python dependencies installed into the system Python environment
+* `uv` 0.11.7
+* baked uv cache at `/opt/uv-cache`
 
-Downstream images that want their own virtual environment can layer one on top of the base image
-while still inheriting the preinstalled packages:
-
-```dockerfile
-RUN uv venv /opt/venv --system-site-packages
-ENV PATH="/opt/venv/bin:${PATH}"
-```
+Base Python packages are not installed into the system Python environment. Downstream
+entrypoints should create their runtime virtual environment as the runtime user and install
+from the baked uv cache.
 
 ## NVIDIA variants
 
-`nvidia-core` contains CUDA, Python, `uv`, PyTorch, and the shared Python dependencies needed by the optional accelerator wheels.
+`nvidia-core` contains CUDA, Python, `uv`, and a baked uv cache containing PyTorch plus
+the shared Python dependencies needed by the optional accelerator wheels.
 
-`nvidia-full` adds:
+`nvidia-full` adds `/opt/offloadr-wheelhouse` with:
 
 * xFormers
 * FlashAttention 3
