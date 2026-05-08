@@ -28,9 +28,9 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
     mv uv /usr/local/bin/uv && \
     rm -rf /tmp/uv.tar.gz
 
-# Configure uv for runtime offline installs from the baked cache
-ENV UV_CACHE_DIR=/opt/uv-cache
+# Configure uv for user-local runtime installs and expose the built-in venv
 ENV UV_LINK_MODE=copy
+ENV OFFLOADR_VENV=/opt/venv
 ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
 ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
 ENV OFFLOADR_TORCH_FLAVOR=${TORCH_FLAVOR}
@@ -39,19 +39,17 @@ ENV OFFLOADR_TORCH_INDEX_URL=https://download.pytorch.org/whl/${TORCH_FLAVOR}
 # Set a neutral workspace for downstream application layers
 WORKDIR /workspace
 
-# Populate the baked uv cache without keeping packages in system Python
+# Populate the built-in venv
 RUN --mount=type=cache,id=offloadr-cpu-uv-build,target=/root/.cache/uv-build,sharing=locked \
-    UV_CACHE_DIR=/root/.cache/uv-build uv venv --python /usr/bin/python${PYTHON_VERSION} /tmp/offloadr-cache-venv && \
+    UV_CACHE_DIR=/root/.cache/uv-build uv venv --python /usr/bin/python${PYTHON_VERSION} ${OFFLOADR_VENV} && \
     UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
-        --python /tmp/offloadr-cache-venv/bin/python \
+        --python ${OFFLOADR_VENV}/bin/python \
         torch==${TORCH_VERSION} \
         torchvision==${TORCHVISION_VERSION} \
         torchaudio==${TORCH_VERSION} \
         --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR} && \
-    mkdir -p /opt/uv-cache && \
-    cp -a /root/.cache/uv-build/. /opt/uv-cache/ && \
-    rm -rf /tmp/offloadr-cache-venv && \
-    chmod -R a+rwX /opt/uv-cache
+    ${OFFLOADR_VENV}/bin/python -m compileall -q ${OFFLOADR_VENV} && \
+    chmod -R u=rwX,go=rX ${OFFLOADR_VENV}
 
 # Mark this image as CPU-only for downstream entrypoints
 ENV OFFLOADR_FORCE_CPU=1

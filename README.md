@@ -27,18 +27,11 @@ All published runtime images are expected to provide:
 * `WORKDIR /workspace`
 * system `python`
 * `uv` 0.11.7
-* baked uv cache at `/opt/uv-cache`
-
-Base Python packages are not installed into the system Python environment. Downstream
-entrypoints should create their runtime virtual environment as the runtime user and install
-from the baked uv cache.
+* built-in virtual environment at `/opt/venv` with the base Python packages
 
 ## NVIDIA variants
 
-`nvidia-core` contains CUDA, Python, `uv`, and a baked uv cache containing PyTorch plus
-the shared Python dependencies needed by the optional accelerator wheels.
-
-`nvidia-full` adds `/opt/offloadr-wheelhouse` with:
+`nvidia-full` also contains these accelerator packages in the built-in venv:
 
 * xFormers
 * FlashAttention 3

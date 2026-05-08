@@ -3,10 +3,16 @@ FROM ${NVIDIA_CORE_IMAGE}
 
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
-ENV OFFLOADR_WHEELHOUSE=/opt/offloadr-wheelhouse
-
-# Keep optional accelerator wheels as an explicit offline install source
-COPY --from=sageattention /workspace/SageAttention/dist/ /opt/offloadr-wheelhouse/
-COPY --from=nunchaku /artifacts/nunchaku/dist/ /opt/offloadr-wheelhouse/
-COPY --from=xformers /artifacts/xformers/dist/ /opt/offloadr-wheelhouse/
-COPY --from=flashattention /artifacts/flashattention/dist/ /opt/offloadr-wheelhouse/
+# Install accelerator wheels into the inherited built-in venv
+RUN --mount=type=cache,id=offloadr-nvidia-full-uv-build,target=/root/.cache/uv-build,sharing=locked \
+    --mount=type=bind,from=sageattention,source=/workspace/SageAttention/dist,target=/tmp/offloadr-wheels/sageattention,ro \
+    --mount=type=bind,from=nunchaku,source=/artifacts/nunchaku/dist,target=/tmp/offloadr-wheels/nunchaku,ro \
+    --mount=type=bind,from=xformers,source=/artifacts/xformers/dist,target=/tmp/offloadr-wheels/xformers,ro \
+    --mount=type=bind,from=flashattention,source=/artifacts/flashattention/dist,target=/tmp/offloadr-wheels/flashattention,ro \
+    UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
+        --python ${OFFLOADR_VENV}/bin/python \
+        --no-deps \
+        --no-index \
+        /tmp/offloadr-wheels/*/*.whl && \
+    ${OFFLOADR_VENV}/bin/python -m compileall -q ${OFFLOADR_VENV} && \
+    chmod -R u=rwX,go=rX ${OFFLOADR_VENV}
