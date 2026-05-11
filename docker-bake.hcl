@@ -2,13 +2,13 @@ variable "DOCKER_REGISTRY_URL" {
     default = "ghcr.io/offloadr/base/"
 }
 variable "PYTHON_VERSION" {
-    default = "3.12"
+    default = "3.13"
 }
 variable "CPU_RUNTIME_IMAGE" {
     default = "ubuntu:24.04"
 }
 variable "UV_VERSION" {
-    default = "0.11.7"
+    default = "0.11.12"
 }
 variable "TORCH_VERSION" {
     default = "2.10.0"

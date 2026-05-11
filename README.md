@@ -15,10 +15,10 @@ The public image contract is:
 
 The default immutable tags built by this repository are:
 
-* `cpu-core:py3.12-torch2.10.0-cpu`
-* `amd-core:py3.12-torch2.10.0-rocm7.1.1`
-* `nvidia-core:py3.12-torch2.10.0-cuda13.0.2`
-* `nvidia-full:py3.12-torch2.10.0-cuda13.0.2`
+* `cpu-core:py3.13-torch2.10.0-cpu`
+* `amd-core:py3.13-torch2.10.0-rocm7.1.1`
+* `nvidia-core:py3.13-torch2.10.0-cuda13.0.2`
+* `nvidia-full:py3.13-torch2.10.0-cuda13.0.2`
 
 ## Runtime contract
 
@@ -26,7 +26,7 @@ All published runtime images are expected to provide:
 
 * `WORKDIR /workspace`
 * system `python`
-* `uv` 0.11.7
+* `uv` 0.11.12
 * built-in virtual environment at `/opt/venv` with the base Python packages
 
 ## NVIDIA variants
