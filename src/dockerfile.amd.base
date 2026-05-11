@@ -18,8 +18,7 @@ RUN test -n "${PYTHON_VERSION}" && \
 # Install required native runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    python${PYTHON_VERSION} python${PYTHON_VERSION}-dev build-essential libgl1 libglib2.0-0 libgthread-2.0-0 libgtk-3-0 \
-    && ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python \
+    build-essential ca-certificates libgl1 libglib2.0-0 libgthread-2.0-0 libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
@@ -28,8 +27,15 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
     mv uv /usr/local/bin/uv && \
     rm -rf /tmp/uv.tar.gz
 
-# Configure uv for user-local runtime installs and expose the built-in venv
+# Install uv-managed CPython and expose Python commands for downstream layers
 ENV UV_LINK_MODE=copy
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python
+ENV UV_PYTHON_BIN_DIR=/usr/local/bin
+RUN --mount=type=cache,id=offloadr-amd-uv-python,target=/root/.cache/uv,sharing=locked \
+    UV_PYTHON_CACHE_DIR=/root/.cache/uv/python uv python install ${PYTHON_VERSION} --default && \
+    ln -sf /usr/local/bin/python${PYTHON_VERSION} /usr/bin/python
+
+# Configure uv for user-local runtime installs and expose the built-in venv
 ENV OFFLOADR_VENV=/opt/venv
 ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
 ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
@@ -41,7 +47,7 @@ WORKDIR /workspace
 
 # Populate the built-in venv
 RUN --mount=type=cache,id=offloadr-amd-uv-build,target=/root/.cache/uv-build,sharing=locked \
-    UV_CACHE_DIR=/root/.cache/uv-build uv venv --python /usr/bin/python${PYTHON_VERSION} ${OFFLOADR_VENV} && \
+    UV_CACHE_DIR=/root/.cache/uv-build uv venv --python /usr/local/bin/python${PYTHON_VERSION} ${OFFLOADR_VENV} && \
     UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
         --python ${OFFLOADR_VENV}/bin/python \
         torch==${TORCH_VERSION} \

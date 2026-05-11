@@ -18,8 +18,7 @@ RUN test -n "${PYTHON_VERSION}" && \
 # Install required native build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    python${PYTHON_VERSION} python${PYTHON_VERSION}-dev git \
-    && ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python \
+    ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
@@ -31,15 +30,25 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
 # Configure uv cache to work with Docker BuildKit cache
 ENV UV_CACHE_DIR=/cache/uv
 ENV UV_LINK_MODE=copy
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python
+ENV UV_PYTHON_BIN_DIR=/usr/local/bin
+ENV OFFLOADR_BUILDER_VENV=/opt/builder-venv
+ENV VIRTUAL_ENV=${OFFLOADR_BUILDER_VENV}
+ENV PATH=${OFFLOADR_BUILDER_VENV}/bin:${PATH}
+
+# Install uv-managed CPython for extension builds
+RUN --mount=type=cache,target=/cache/uv,sharing=locked \
+    UV_PYTHON_CACHE_DIR=/cache/uv/python uv python install ${PYTHON_VERSION} --default && \
+    uv venv --python /usr/local/bin/python${PYTHON_VERSION} ${OFFLOADR_BUILDER_VENV} && \
+    ln -sf ${OFFLOADR_BUILDER_VENV}/bin/python /usr/bin/python
 
 # Set a neutral workspace for build steps
 WORKDIR /workspace
 
-# Install PyTorch into the system Python environment
+# Install PyTorch into the builder virtual environment
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     uv pip install \
-    --system \
-    --break-system-packages \
+    --python ${OFFLOADR_BUILDER_VENV}/bin/python \
     torch==${TORCH_VERSION} \
     torchvision==${TORCHVISION_VERSION} \
     torchaudio==${TORCH_VERSION} \
@@ -47,4 +56,4 @@ RUN --mount=type=cache,target=/cache/uv,sharing=locked \
 
 # Install build python packages
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --system --break-system-packages ninja wheel packaging
+    uv pip install --python ${OFFLOADR_BUILDER_VENV}/bin/python ninja wheel packaging
