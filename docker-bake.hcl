@@ -1,8 +1,8 @@
 variable "DOCKER_REGISTRY_URL" {
     default = "ghcr.io/offloadr/base/"
 }
-variable "PYTHON_VERSION" {
-    default = "3.13"
+variable "PYTHON_VERSIONS" {
+    default = ["3.12", "3.13"]
 }
 variable "CPU_RUNTIME_IMAGE" {
     default = "ubuntu:24.04"
@@ -58,11 +58,15 @@ group "nvidia-public" {
 }
 
 target "nvidia-cache" {
+    name = "nvidia-cache-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.builder"
     args = {
         CUDA_DEVEL_IMAGE = "${NVIDIA_CUDA_DEVEL_IMAGE}"
-        PYTHON_VERSION   = "${PYTHON_VERSION}"
+        PYTHON_VERSION   = python_version
         UV_VERSION       = "${UV_VERSION}"
         TORCH_VERSION    = "${TORCH_VERSION}"
         TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
@@ -70,130 +74,162 @@ target "nvidia-cache" {
     }
     platforms  = ["linux/amd64"]
     tags       = [
-        "${DOCKER_REGISTRY_URL}nvidia-cache:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
-        "${DOCKER_REGISTRY_URL}nvidia-builder:latest",
+        "${DOCKER_REGISTRY_URL}nvidia-cache:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
+        "${DOCKER_REGISTRY_URL}nvidia-builder:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
     ]
     cache-from = [
-        "type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-cache:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
-        "type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:latest",
+        "type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-cache:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
+        "type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}",
     ]
     cache-to   = ["type=inline"]
 }
 
 target "nvidia-sageattention" {
+    name = "nvidia-sageattention-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.sageattention"
     contexts = {
-        builder = "target:nvidia-cache"
+        builder = "target:nvidia-cache-py${replace(python_version, ".", "")}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:sageattention"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:sageattention"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:sageattention-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:sageattention-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 
 target "nvidia-nunchaku" {
+    name = "nvidia-nunchaku-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.nunchaku"
     contexts = {
-        builder = "target:nvidia-cache"
+        builder = "target:nvidia-cache-py${replace(python_version, ".", "")}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 
 target "nvidia-xformers" {
+    name = "nvidia-xformers-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.xformers"
     contexts = {
-        builder = "target:nvidia-cache"
+        builder = "target:nvidia-cache-py${replace(python_version, ".", "")}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:xformers"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:xformers"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:xformers-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:xformers-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 
 target "nvidia-flashattention" {
+    name = "nvidia-flashattention-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.flashattention"
     contexts = {
-        builder = "target:nvidia-cache"
+        builder = "target:nvidia-cache-py${replace(python_version, ".", "")}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:flashattention"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:flashattention"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:flashattention-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:flashattention-py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 
 target "nvidia-core" {
+    name = "nvidia-core-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.core"
     args = {
         CUDA_RUNTIME_IMAGE = "${NVIDIA_CUDA_RUNTIME_IMAGE}"
-        PYTHON_VERSION     = "${PYTHON_VERSION}"
+        PYTHON_VERSION     = python_version
         UV_VERSION         = "${UV_VERSION}"
         TORCH_VERSION      = "${TORCH_VERSION}"
         TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR       = "${NVIDIA_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-core:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-core:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-core:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-core:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 
 target "nvidia-full" {
+    name = "nvidia-full-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.nvidia.full"
     contexts = {
-        nvidia-core   = "target:nvidia-core"
-        sageattention = "target:nvidia-sageattention"
-        nunchaku      = "target:nvidia-nunchaku"
-        xformers      = "target:nvidia-xformers"
-        flashattention = "target:nvidia-flashattention"
+        nvidia-core   = "target:nvidia-core-py${replace(python_version, ".", "")}"
+        sageattention = "target:nvidia-sageattention-py${replace(python_version, ".", "")}"
+        nunchaku      = "target:nvidia-nunchaku-py${replace(python_version, ".", "")}"
+        xformers      = "target:nvidia-xformers-py${replace(python_version, ".", "")}"
+        flashattention = "target:nvidia-flashattention-py${replace(python_version, ".", "")}"
     }
     args = {
         NVIDIA_CORE_IMAGE = "nvidia-core"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-full:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-full:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-full:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-full:py${python_version}-torch${TORCH_VERSION}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 
 target "cpu-core" {
+    name = "cpu-core-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.cpu.base"
     args = {
         CPU_RUNTIME_IMAGE = "${CPU_RUNTIME_IMAGE}"
-        PYTHON_VERSION    = "${PYTHON_VERSION}"
+        PYTHON_VERSION    = python_version
         UV_VERSION        = "${UV_VERSION}"
         TORCH_VERSION     = "${TORCH_VERSION}"
         TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR      = "${CPU_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}cpu-core:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cpu"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}cpu-core:py${PYTHON_VERSION}-torch${TORCH_VERSION}-cpu"]
+    tags       = ["${DOCKER_REGISTRY_URL}cpu-core:py${python_version}-torch${TORCH_VERSION}-cpu"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}cpu-core:py${python_version}-torch${TORCH_VERSION}-cpu"]
     cache-to   = ["type=inline"]
 }
 
 target "amd-core" {
+    name = "amd-core-py${replace(python_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+    }
     context = "src"
     dockerfile = "dockerfile.amd.base"
     args = {
         ROCM_IMAGE      = "${AMD_ROCM_IMAGE}"
-        PYTHON_VERSION  = "${PYTHON_VERSION}"
+        PYTHON_VERSION  = python_version
         UV_VERSION      = "${UV_VERSION}"
         TORCH_VERSION   = "${TORCH_VERSION}"
         TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
         TORCH_FLAVOR    = "${AMD_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}amd-core:py${PYTHON_VERSION}-torch${TORCH_VERSION}-rocm${AMD_ROCM_VERSION}"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}amd-core:py${PYTHON_VERSION}-torch${TORCH_VERSION}-rocm${AMD_ROCM_VERSION}"]
+    tags       = ["${DOCKER_REGISTRY_URL}amd-core:py${python_version}-torch${TORCH_VERSION}-rocm${AMD_ROCM_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}amd-core:py${python_version}-torch${TORCH_VERSION}-rocm${AMD_ROCM_VERSION}"]
     cache-to   = ["type=inline"]
 }
