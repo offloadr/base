@@ -13,16 +13,24 @@ The public image contract is:
 
 ## Default tags
 
-The default tags built by this repository are built for Python 3.12 and 3.13:
+The default tags built by this repository are built for Python 3.12 and 3.13 with PyTorch 2.10.0 and 2.11.0:
 
 * `cpu-core:py3.12-torch2.10.0-cpu`
 * `cpu-core:py3.13-torch2.10.0-cpu`
+* `cpu-core:py3.12-torch2.11.0-cpu`
+* `cpu-core:py3.13-torch2.11.0-cpu`
 * `amd-core:py3.12-torch2.10.0-rocm7.1.1`
 * `amd-core:py3.13-torch2.10.0-rocm7.1.1`
-* `nvidia-core:py3.12-torch2.10.0-cuda13.0.2`
-* `nvidia-core:py3.13-torch2.10.0-cuda13.0.2`
-* `nvidia-full:py3.12-torch2.10.0-cuda13.0.2`
-* `nvidia-full:py3.13-torch2.10.0-cuda13.0.2`
+* `amd-core:py3.12-torch2.11.0-rocm7.2.3`
+* `amd-core:py3.13-torch2.11.0-rocm7.2.3`
+* `nvidia-core:py3.12-torch2.10.0-cuda13.0.3`
+* `nvidia-core:py3.13-torch2.10.0-cuda13.0.3`
+* `nvidia-core:py3.12-torch2.11.0-cuda13.0.3`
+* `nvidia-core:py3.13-torch2.11.0-cuda13.0.3`
+* `nvidia-full:py3.12-torch2.10.0-cuda13.0.3`
+* `nvidia-full:py3.13-torch2.10.0-cuda13.0.3`
+* `nvidia-full:py3.12-torch2.11.0-cuda13.0.3`
+* `nvidia-full:py3.13-torch2.11.0-cuda13.0.3`
 
 ## Runtime contract
 
@@ -59,5 +67,5 @@ docker buildx bake nvidia-full
 Build a specific Python flavor:
 
 ```shell
-docker buildx bake nvidia-full-py312
+docker buildx bake nvidia-full-py312-torch2110
 ```
