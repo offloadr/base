@@ -37,13 +37,13 @@ jobs:
           name: ci
       - name: Log in to registry
         if: ${{ inputs.push_images }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build ${{ matrix.target }}
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           push: ${{ inputs.push_images }}
           targets: ${{ matrix.target }}
@@ -80,13 +80,13 @@ jobs:
           name: ci
       - name: Log in to registry
         if: ${{ inputs.push_images }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build ${{ matrix.target }}
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           push: ${{ inputs.push_images }}
           targets: ${{ matrix.target }}
@@ -126,13 +126,13 @@ jobs:
           name: ci
       - name: Log in to registry
         if: ${{ inputs.push_images }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build ${{ matrix.target }}
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           push: ${{ inputs.push_images }}
           targets: ${{ matrix.target }}
@@ -166,13 +166,13 @@ jobs:
           name: ci
       - name: Log in to registry
         if: ${{ inputs.push_images }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build ${{ matrix.target }}
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           push: ${{ inputs.push_images }}
           targets: ${{ matrix.target }}
