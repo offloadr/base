@@ -64,7 +64,7 @@ Build a specific image:
 docker buildx bake nvidia-full
 ```
 
-Build a specific Python flavor:
+Build a specific Python and PyTorch flavor:
 
 ```shell
 docker buildx bake nvidia-full-py312-torch2110

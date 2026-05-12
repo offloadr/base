@@ -18,8 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - nvidia-cache-py312
-          - nvidia-cache-py313
+          - nvidia-cache-py312-torch2100
+          - nvidia-cache-py313-torch2100
+          - nvidia-cache-py312-torch2110
+          - nvidia-cache-py313-torch2110
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -57,12 +59,18 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - cpu-core-py312
-          - cpu-core-py313
-          - amd-core-py312
-          - amd-core-py313
-          - nvidia-core-py312
-          - nvidia-core-py313
+          - cpu-core-py312-torch2100
+          - cpu-core-py313-torch2100
+          - cpu-core-py312-torch2110
+          - cpu-core-py313-torch2110
+          - amd-core-py312-torch2100
+          - amd-core-py313-torch2100
+          - amd-core-py312-torch2110
+          - amd-core-py313-torch2110
+          - nvidia-core-py312-torch2100
+          - nvidia-core-py313-torch2100
+          - nvidia-core-py312-torch2110
+          - nvidia-core-py313-torch2110
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -101,14 +109,22 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - nvidia-sageattention-py312
-          - nvidia-sageattention-py313
-          - nvidia-nunchaku-py312
-          - nvidia-nunchaku-py313
-          - nvidia-xformers-py312
-          - nvidia-xformers-py313
-          - nvidia-flashattention-py312
-          - nvidia-flashattention-py313
+          - nvidia-sageattention-py312-torch2100
+          - nvidia-sageattention-py313-torch2100
+          - nvidia-sageattention-py312-torch2110
+          - nvidia-sageattention-py313-torch2110
+          - nvidia-nunchaku-py312-torch2100
+          - nvidia-nunchaku-py313-torch2100
+          - nvidia-nunchaku-py312-torch2110
+          - nvidia-nunchaku-py313-torch2110
+          - nvidia-xformers-py312-torch2100
+          - nvidia-xformers-py313-torch2100
+          - nvidia-xformers-py312-torch2110
+          - nvidia-xformers-py313-torch2110
+          - nvidia-flashattention-py312-torch2100
+          - nvidia-flashattention-py313-torch2100
+          - nvidia-flashattention-py312-torch2110
+          - nvidia-flashattention-py313-torch2110
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -147,8 +163,10 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - nvidia-full-py312
-          - nvidia-full-py313
+          - nvidia-full-py312-torch2100
+          - nvidia-full-py313-torch2100
+          - nvidia-full-py312-torch2110
+          - nvidia-full-py313-torch2110
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
