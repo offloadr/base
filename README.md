@@ -13,11 +13,15 @@ The public image contract is:
 
 ## Default tags
 
-The default immutable tags built by this repository are:
+The default tags built by this repository are built for Python 3.12 and 3.13:
 
+* `cpu-core:py3.12-torch2.10.0-cpu`
 * `cpu-core:py3.13-torch2.10.0-cpu`
+* `amd-core:py3.12-torch2.10.0-rocm7.1.1`
 * `amd-core:py3.13-torch2.10.0-rocm7.1.1`
+* `nvidia-core:py3.12-torch2.10.0-cuda13.0.2`
 * `nvidia-core:py3.13-torch2.10.0-cuda13.0.2`
+* `nvidia-full:py3.12-torch2.10.0-cuda13.0.2`
 * `nvidia-full:py3.13-torch2.10.0-cuda13.0.2`
 
 ## Runtime contract
@@ -50,4 +54,10 @@ Build a specific image:
 
 ```shell
 docker buildx bake nvidia-full
+```
+
+Build a specific Python flavor:
+
+```shell
+docker buildx bake nvidia-full-py312
 ```

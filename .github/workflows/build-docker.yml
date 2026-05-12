@@ -14,6 +14,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - nvidia-cache-py312
+          - nvidia-cache-py313
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -36,11 +42,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build nvidia-cache
+      - name: Build ${{ matrix.target }}
         uses: docker/bake-action@v6
         with:
           push: ${{ inputs.push_images }}
-          targets: nvidia-cache
+          targets: ${{ matrix.target }}
 
   build-core-images:
     runs-on: ubuntu-latest
@@ -50,7 +56,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [cpu-core, amd-core, nvidia-core]
+        target:
+          - cpu-core-py312
+          - cpu-core-py313
+          - amd-core-py312
+          - amd-core-py313
+          - nvidia-core-py312
+          - nvidia-core-py313
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -88,7 +100,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [nvidia-sageattention, nvidia-nunchaku, nvidia-xformers, nvidia-flashattention]
+        target:
+          - nvidia-sageattention-py312
+          - nvidia-sageattention-py313
+          - nvidia-nunchaku-py312
+          - nvidia-nunchaku-py313
+          - nvidia-xformers-py312
+          - nvidia-xformers-py313
+          - nvidia-flashattention-py312
+          - nvidia-flashattention-py313
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -123,6 +143,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - nvidia-full-py312
+          - nvidia-full-py313
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -145,8 +171,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build nvidia-full
+      - name: Build ${{ matrix.target }}
         uses: docker/bake-action@v6
         with:
           push: ${{ inputs.push_images }}
-          targets: nvidia-full
+          targets: ${{ matrix.target }}
