@@ -57,6 +57,7 @@ group "default" {
     targets = [
         "cpu-core",
         "amd-core",
+        "amd-full",
         "nvidia-core",
         "nvidia-full",
     ]
@@ -252,5 +253,25 @@ target "amd-core" {
     platforms  = ["linux/amd64"]
     tags       = ["${DOCKER_REGISTRY_URL}amd-core:py${python_version}-torch${torch_version}-rocm${AMD_ROCM_VERSIONS[torch_version]}"]
     cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}amd-core:py${python_version}-torch${torch_version}-rocm${AMD_ROCM_VERSIONS[torch_version]}"]
+    cache-to   = ["type=inline"]
+}
+
+target "amd-full" {
+    name = "amd-full-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+        torch_version  = TORCH_VERSIONS
+    }
+    context = "src"
+    dockerfile = "dockerfile.amd.full"
+    contexts = {
+        amd-core = "target:amd-core-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+    }
+    args = {
+        AMD_CORE_IMAGE = "amd-core"
+    }
+    platforms  = ["linux/amd64"]
+    tags       = ["${DOCKER_REGISTRY_URL}amd-full:py${python_version}-torch${torch_version}-rocm${AMD_ROCM_VERSIONS[torch_version]}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}amd-full:py${python_version}-torch${torch_version}-rocm${AMD_ROCM_VERSIONS[torch_version]}"]
     cache-to   = ["type=inline"]
 }

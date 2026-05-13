@@ -8,6 +8,7 @@ The public image contract is:
 
 * `ghcr.io/offloadr/base/cpu-core`
 * `ghcr.io/offloadr/base/amd-core`
+* `ghcr.io/offloadr/base/amd-full`
 * `ghcr.io/offloadr/base/nvidia-core`
 * `ghcr.io/offloadr/base/nvidia-full`
 
@@ -23,6 +24,10 @@ The default tags built by this repository are built for Python 3.12 and 3.13 wit
 * `amd-core:py3.13-torch2.10.0-rocm7.1.1`
 * `amd-core:py3.12-torch2.11.0-rocm7.2.3`
 * `amd-core:py3.13-torch2.11.0-rocm7.2.3`
+* `amd-full:py3.12-torch2.10.0-rocm7.1.1`
+* `amd-full:py3.13-torch2.10.0-rocm7.1.1`
+* `amd-full:py3.12-torch2.11.0-rocm7.2.3`
+* `amd-full:py3.13-torch2.11.0-rocm7.2.3`
 * `nvidia-core:py3.12-torch2.10.0-cuda13.0.3`
 * `nvidia-core:py3.13-torch2.10.0-cuda13.0.3`
 * `nvidia-core:py3.12-torch2.11.0-cuda13.0.3`
@@ -40,6 +45,12 @@ All published runtime images are expected to provide:
 * system `python`
 * `uv` 0.11.12
 * built-in virtual environment at `/opt/venv` with the base Python packages
+
+## AMD variants
+
+`amd-full` also contains these accelerator packages in the built-in venv:
+
+* xFormers
 
 ## NVIDIA variants
 
