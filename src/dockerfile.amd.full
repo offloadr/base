@@ -1,0 +1,15 @@
+ARG AMD_CORE_IMAGE=amd-core
+FROM ${AMD_CORE_IMAGE}
+
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
+ARG XFORMERS_VERSION=0.0.35
+
+# Install ROCm accelerator packages into the inherited built-in venv
+RUN --mount=type=cache,id=offloadr-amd-full-uv-build,target=/root/.cache/uv-build,sharing=locked \
+    UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
+        --python ${OFFLOADR_VENV}/bin/python \
+        xformers==${XFORMERS_VERSION} \
+        --index-url ${OFFLOADR_TORCH_INDEX_URL} && \
+    ${OFFLOADR_VENV}/bin/python -m compileall -q ${OFFLOADR_VENV} && \
+    chmod -R u=rwX,go=rX ${OFFLOADR_VENV}
