@@ -42,9 +42,11 @@ The default tags built by this repository are built for Python 3.12 and 3.13 wit
 All published runtime images are expected to provide:
 
 * `WORKDIR /workspace`
-* system `python`
+* `python` command backed by uv-managed CPython
 * `uv` 0.11.12
 * built-in virtual environment at `/opt/venv` with the base Python packages
+* `UV_CONSTRAINT=/opt/offloadr/constraints/torch-stack.txt` to pin `torch`,
+  `torchvision`, and `torchaudio`
 
 ## AMD variants
 
