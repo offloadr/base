@@ -1,5 +1,5 @@
-ARG CPU_RUNTIME_IMAGE
-FROM ${CPU_RUNTIME_IMAGE}
+ARG ROCM_IMAGE
+FROM ${ROCM_IMAGE}
 
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
@@ -31,7 +31,7 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python
 ENV UV_PYTHON_BIN_DIR=/usr/local/bin
-RUN --mount=type=cache,id=offloadr-cpu-uv-python,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=offloadr-amd-uv-python,target=/root/.cache/uv,sharing=locked \
     UV_PYTHON_CACHE_DIR=/root/.cache/uv/python uv python install ${PYTHON_VERSION} --default && \
     ln -sf /usr/local/bin/python${PYTHON_VERSION} /usr/bin/python
 
@@ -41,12 +41,17 @@ ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
 ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
 ENV OFFLOADR_TORCH_FLAVOR=${TORCH_FLAVOR}
 ENV OFFLOADR_TORCH_INDEX_URL=https://download.pytorch.org/whl/${TORCH_FLAVOR}
+ENV UV_CONSTRAINT=/opt/offloadr/constraints/torch-stack.txt
+RUN mkdir -p /opt/offloadr/constraints && \
+    printf 'torch==%s\ntorchvision==%s\ntorchaudio==%s\n' \
+        "${TORCH_VERSION}" "${TORCHVISION_VERSION}" "${TORCH_VERSION}" \
+        > ${UV_CONSTRAINT}
 
 # Set a neutral workspace for downstream application layers
 WORKDIR /workspace
 
 # Populate the built-in venv
-RUN --mount=type=cache,id=offloadr-cpu-uv-build,target=/root/.cache/uv-build,sharing=locked \
+RUN --mount=type=cache,id=offloadr-amd-uv-build,target=/root/.cache/uv-build,sharing=locked \
     UV_CACHE_DIR=/root/.cache/uv-build uv venv --python /usr/local/bin/python${PYTHON_VERSION} ${OFFLOADR_VENV} && \
     UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
         --python ${OFFLOADR_VENV}/bin/python \
@@ -57,5 +62,7 @@ RUN --mount=type=cache,id=offloadr-cpu-uv-build,target=/root/.cache/uv-build,sha
     ${OFFLOADR_VENV}/bin/python -m compileall -q ${OFFLOADR_VENV} && \
     chmod -R u=rwX,go=rX ${OFFLOADR_VENV}
 
-# Mark this image as CPU-only for downstream entrypoints
-ENV OFFLOADR_FORCE_CPU=1
+RUN ${OFFLOADR_VENV}/bin/python -c "import importlib.metadata as m, os; \
+assert m.version('torch').partition('+')[0] == os.environ['OFFLOADR_TORCH_VERSION']; \
+assert m.version('torchvision').partition('+')[0] == os.environ['OFFLOADR_TORCHVISION_VERSION']; \
+assert m.version('torchaudio').partition('+')[0] == os.environ['OFFLOADR_TORCH_VERSION']"

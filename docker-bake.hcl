@@ -219,7 +219,7 @@ target "cpu-core" {
         torch_version  = TORCH_VERSIONS
     }
     context = "src"
-    dockerfile = "dockerfile.cpu.base"
+    dockerfile = "dockerfile.cpu.core"
     args = {
         CPU_RUNTIME_IMAGE = "${CPU_RUNTIME_IMAGE}"
         PYTHON_VERSION    = python_version
@@ -241,7 +241,7 @@ target "amd-core" {
         torch_version  = TORCH_VERSIONS
     }
     context = "src"
-    dockerfile = "dockerfile.amd.base"
+    dockerfile = "dockerfile.amd.core"
     args = {
         ROCM_IMAGE      = AMD_ROCM_IMAGES[torch_version]
         PYTHON_VERSION  = python_version
