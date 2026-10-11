@@ -58,6 +58,10 @@ All published runtime images are expected to provide:
 * xFormers
 * SageAttention2++
 
+The runtime starts from NVIDIA's minimal CUDA `base` image. PyTorch's CUDA
+wheels supply the math libraries, avoiding a second copy from NVIDIA's larger
+`runtime` image. Extension builders retain the CUDA `devel` image.
+
 Nunchaku is no longer bundled. Install it only in downstream images that need
 its specialized models and custom nodes.
 

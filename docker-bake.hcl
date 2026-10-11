@@ -31,7 +31,7 @@ variable "NVIDIA_CUDA_VERSION" {
     default = "13.0.3"
 }
 variable "NVIDIA_CUDA_RUNTIME_IMAGE" {
-    default = "nvidia/cuda:13.0.3-runtime-ubuntu24.04"
+    default = "nvidia/cuda:13.0.3-base-ubuntu24.04"
 }
 variable "NVIDIA_CUDA_DEVEL_IMAGE" {
     default = "nvidia/cuda:13.0.3-devel-ubuntu24.04"
