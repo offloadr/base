@@ -3,16 +3,16 @@ FROM ${NVIDIA_CORE_IMAGE}
 
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
-# Install accelerator wheels into the inherited built-in venv
+# Keep the standard image limited to broadly usable attention backends.
+# Wheel installs use the default 022 umask; avoid chmod/compileall over the
+# inherited venv, which can copy the large Torch stack into this layer again.
 RUN --mount=type=cache,id=offloadr-nvidia-full-uv-build,target=/root/.cache/uv-build,sharing=locked \
     --mount=type=bind,from=sageattention,source=/workspace/SageAttention/dist,target=/tmp/offloadr-wheels/sageattention,ro \
-    --mount=type=bind,from=nunchaku,source=/artifacts/nunchaku/dist,target=/tmp/offloadr-wheels/nunchaku,ro \
     --mount=type=bind,from=xformers,source=/artifacts/xformers/dist,target=/tmp/offloadr-wheels/xformers,ro \
-    --mount=type=bind,from=flashattention,source=/artifacts/flashattention/dist,target=/tmp/offloadr-wheels/flashattention,ro \
+    umask 022 && \
     UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
         --python ${OFFLOADR_VENV}/bin/python \
         --no-deps \
         --no-index \
         /tmp/offloadr-wheels/*/*.whl && \
-    ${OFFLOADR_VENV}/bin/python -m compileall -q ${OFFLOADR_VENV} && \
-    chmod -R u=rwX,go=rX ${OFFLOADR_VENV}
+    PYTHONDONTWRITEBYTECODE=1 ${OFFLOADR_VENV}/bin/python -c "import torch, torchvision, torchaudio, xformers.ops, sageattention; from sageattention.sm80_compile import _qattn_sm80; assert xformers._has_cpp_library"

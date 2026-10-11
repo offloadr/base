@@ -1,4 +1,4 @@
-ARG CUDA_DEVEL_IMAGE
+ARG CUDA_DEVEL_IMAGE=nvidia/cuda:13.0.3-devel-ubuntu24.04
 FROM ${CUDA_DEVEL_IMAGE}
 
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
@@ -7,12 +7,14 @@ ARG PYTHON_VERSION
 ARG UV_VERSION
 ARG TORCH_VERSION
 ARG TORCHVISION_VERSION
+ARG TORCHAUDIO_VERSION
 ARG TORCH_FLAVOR
 
 RUN test -n "${PYTHON_VERSION}" && \
     test -n "${UV_VERSION}" && \
     test -n "${TORCH_VERSION}" && \
     test -n "${TORCHVISION_VERSION}" && \
+    test -n "${TORCHAUDIO_VERSION}" && \
     test -n "${TORCH_FLAVOR}"
 
 # Install required native build dependencies
@@ -35,14 +37,16 @@ ENV UV_PYTHON_BIN_DIR=/usr/local/bin
 ENV OFFLOADR_BUILDER_VENV=/opt/builder-venv
 ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
 ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
+ENV OFFLOADR_TORCHAUDIO_VERSION=${TORCHAUDIO_VERSION}
 ENV OFFLOADR_TORCH_FLAVOR=${TORCH_FLAVOR}
 ENV OFFLOADR_TORCH_INDEX_URL=https://download.pytorch.org/whl/${TORCH_FLAVOR}
 ENV UV_CONSTRAINT=/opt/offloadr/constraints/torch-stack.txt
 ENV VIRTUAL_ENV=${OFFLOADR_BUILDER_VENV}
 ENV PATH=${OFFLOADR_BUILDER_VENV}/bin:${PATH}
 RUN mkdir -p /opt/offloadr/constraints && \
-    printf 'torch==%s\ntorchvision==%s\ntorchaudio==%s\n' \
-        "${TORCH_VERSION}" "${TORCHVISION_VERSION}" "${TORCH_VERSION}" \
+    printf 'torch==%s+%s\ntorchvision==%s+%s\ntorchaudio==%s\n' \
+        "${TORCH_VERSION}" "${TORCH_FLAVOR}" \
+        "${TORCHVISION_VERSION}" "${TORCH_FLAVOR}" "${TORCHAUDIO_VERSION}" \
         > ${UV_CONSTRAINT}
 
 # Install uv-managed CPython for extension builds
@@ -60,13 +64,14 @@ RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     --python ${OFFLOADR_BUILDER_VENV}/bin/python \
     torch==${TORCH_VERSION} \
     torchvision==${TORCHVISION_VERSION} \
-    torchaudio==${TORCH_VERSION} \
-    --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR}
+    --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR} && \
+    uv pip install --python ${OFFLOADR_BUILDER_VENV}/bin/python torchaudio==${TORCHAUDIO_VERSION}
 
-RUN ${OFFLOADR_BUILDER_VENV}/bin/python -c "import importlib.metadata as m, os; \
+RUN ${OFFLOADR_BUILDER_VENV}/bin/python -c "import importlib.metadata as m, os, torch; \
 assert m.version('torch').partition('+')[0] == os.environ['OFFLOADR_TORCH_VERSION']; \
 assert m.version('torchvision').partition('+')[0] == os.environ['OFFLOADR_TORCHVISION_VERSION']; \
-assert m.version('torchaudio').partition('+')[0] == os.environ['OFFLOADR_TORCH_VERSION']"
+assert m.version('torchaudio').partition('+')[0] == os.environ['OFFLOADR_TORCHAUDIO_VERSION']; \
+assert 'cu' + torch.version.cuda.replace('.', '') == os.environ['OFFLOADR_TORCH_FLAVOR']"
 
 # Install build python packages
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \

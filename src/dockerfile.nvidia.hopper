@@ -1,0 +1,15 @@
+ARG NVIDIA_FULL_IMAGE=nvidia-full
+FROM ${NVIDIA_FULL_IMAGE}
+
+LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
+
+# FlashAttention 3 is a separate opt-in layer for Hopper (H100/H800) GPUs.
+# Resolve its Python dependencies (including ninja); inherited uv constraints
+# keep the Torch stack pinned to this image's Python/PyTorch/CUDA flavor.
+RUN --mount=type=cache,id=offloadr-nvidia-hopper-uv-build,target=/root/.cache/uv-build,sharing=locked \
+    --mount=type=bind,from=flashattention,source=/artifacts/flashattention/dist,target=/tmp/offloadr-wheels/flashattention,ro \
+    umask 022 && \
+    UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
+        --python ${OFFLOADR_VENV}/bin/python \
+        /tmp/offloadr-wheels/flashattention/*.whl && \
+    PYTHONDONTWRITEBYTECODE=1 ${OFFLOADR_VENV}/bin/python -c "import flash_attn_interface"

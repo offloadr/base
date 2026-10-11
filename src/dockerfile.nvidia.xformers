@@ -4,9 +4,12 @@ LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
 ARG XFORMERS_VERSION=0.0.35
 
+# These stable-ABI CUDA 13 wheels are published in the cu130 index.
+ARG WHEEL_TORCH_FLAVOR=cu130
+
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     mkdir -p /artifacts/xformers/dist && \
-    export CUDA_TAG=$(python -c "import torch; print('cu' + torch.version.cuda.replace('.', ''))") && \
+    export CUDA_TAG=${WHEEL_TORCH_FLAVOR} && \
     export XFORMERS_WHEEL=xformers-${XFORMERS_VERSION}-py39-none-manylinux_2_28_x86_64.whl && \
     python - <<'PY'
 import os

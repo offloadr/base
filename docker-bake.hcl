@@ -13,10 +13,18 @@ variable "UV_VERSION" {
 variable "TORCH_VERSIONS" {
     default = ["2.10.0", "2.11.0"]
 }
+# Keep NVIDIA's CUDA wheel matrix independent from the CPU/ROCm releases.
+variable "NVIDIA_TORCH_VERSIONS" {
+    default = ["2.14.1"]
+}
+variable "NVIDIA_TORCHAUDIO_VERSION" {
+    default = "2.11.0"
+}
 variable "TORCHVISION_VERSIONS" {
     default = {
         "2.10.0" = "0.25.0"
         "2.11.0" = "0.26.0"
+        "2.14.1" = "0.29.1"
     }
 }
 variable "NVIDIA_CUDA_VERSION" {
@@ -29,6 +37,10 @@ variable "NVIDIA_CUDA_DEVEL_IMAGE" {
     default = "nvidia/cuda:13.0.3-devel-ubuntu24.04"
 }
 variable "NVIDIA_TORCH_FLAVOR" {
+    default = "cu130"
+}
+# Select accelerator wheels explicitly from the matching CUDA index.
+variable "NVIDIA_EXTENSION_WHEEL_FLAVOR" {
     default = "cu130"
 }
 variable "AMD_ROCM_VERSIONS" {
@@ -74,7 +86,7 @@ target "nvidia-cache" {
     name = "nvidia-cache-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     matrix = {
         python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
     }
     context = "src"
     dockerfile = "dockerfile.nvidia.builder"
@@ -84,6 +96,7 @@ target "nvidia-cache" {
         UV_VERSION       = "${UV_VERSION}"
         TORCH_VERSION    = torch_version
         TORCHVISION_VERSION = TORCHVISION_VERSIONS[torch_version]
+        TORCHAUDIO_VERSION = NVIDIA_TORCHAUDIO_VERSION
         TORCH_FLAVOR     = "${NVIDIA_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
@@ -102,7 +115,7 @@ target "nvidia-sageattention" {
     name = "nvidia-sageattention-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     matrix = {
         python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
     }
     context = "src"
     dockerfile = "dockerfile.nvidia.sageattention"
@@ -115,33 +128,19 @@ target "nvidia-sageattention" {
     cache-to   = ["type=inline"]
 }
 
-target "nvidia-nunchaku" {
-    name = "nvidia-nunchaku-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
-    matrix = {
-        python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
-    }
-    context = "src"
-    dockerfile = "dockerfile.nvidia.nunchaku"
-    contexts = {
-        builder = "target:nvidia-cache-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
-    }
-    platforms  = ["linux/amd64"]
-    tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku-py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
-    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-builder:nunchaku-py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
-    cache-to   = ["type=inline"]
-}
-
 target "nvidia-xformers" {
     name = "nvidia-xformers-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     matrix = {
         python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
     }
     context = "src"
     dockerfile = "dockerfile.nvidia.xformers"
     contexts = {
         builder = "target:nvidia-cache-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+    }
+    args = {
+        WHEEL_TORCH_FLAVOR = NVIDIA_EXTENSION_WHEEL_FLAVOR
     }
     platforms  = ["linux/amd64"]
     tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:xformers-py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
@@ -153,12 +152,15 @@ target "nvidia-flashattention" {
     name = "nvidia-flashattention-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     matrix = {
         python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
     }
     context = "src"
     dockerfile = "dockerfile.nvidia.flashattention"
     contexts = {
         builder = "target:nvidia-cache-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+    }
+    args = {
+        WHEEL_TORCH_FLAVOR = NVIDIA_EXTENSION_WHEEL_FLAVOR
     }
     platforms  = ["linux/amd64"]
     tags       = ["${DOCKER_REGISTRY_URL}nvidia-builder:flashattention-py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
@@ -170,7 +172,7 @@ target "nvidia-core" {
     name = "nvidia-core-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     matrix = {
         python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
     }
     context = "src"
     dockerfile = "dockerfile.nvidia.core"
@@ -180,6 +182,7 @@ target "nvidia-core" {
         UV_VERSION         = "${UV_VERSION}"
         TORCH_VERSION      = torch_version
         TORCHVISION_VERSION = TORCHVISION_VERSIONS[torch_version]
+        TORCHAUDIO_VERSION = NVIDIA_TORCHAUDIO_VERSION
         TORCH_FLAVOR       = "${NVIDIA_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
@@ -192,16 +195,14 @@ target "nvidia-full" {
     name = "nvidia-full-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     matrix = {
         python_version = PYTHON_VERSIONS
-        torch_version  = TORCH_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
     }
     context = "src"
     dockerfile = "dockerfile.nvidia.full"
     contexts = {
         nvidia-core   = "target:nvidia-core-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
         sageattention = "target:nvidia-sageattention-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
-        nunchaku      = "target:nvidia-nunchaku-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
         xformers      = "target:nvidia-xformers-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
-        flashattention = "target:nvidia-flashattention-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
     }
     args = {
         NVIDIA_CORE_IMAGE = "nvidia-core"
@@ -209,6 +210,28 @@ target "nvidia-full" {
     platforms  = ["linux/amd64"]
     tags       = ["${DOCKER_REGISTRY_URL}nvidia-full:py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-full:py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-to   = ["type=inline"]
+}
+
+# Opt-in Hopper image: excluded from the default/public NVIDIA build groups.
+target "nvidia-hopper" {
+    name = "nvidia-hopper-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+    matrix = {
+        python_version = PYTHON_VERSIONS
+        torch_version  = NVIDIA_TORCH_VERSIONS
+    }
+    context = "src"
+    dockerfile = "dockerfile.nvidia.hopper"
+    contexts = {
+        nvidia-full    = "target:nvidia-full-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+        flashattention = "target:nvidia-flashattention-py${replace(python_version, ".", "")}-torch${replace(torch_version, ".", "")}"
+    }
+    args = {
+        NVIDIA_FULL_IMAGE = "nvidia-full"
+    }
+    platforms  = ["linux/amd64"]
+    tags       = ["${DOCKER_REGISTRY_URL}nvidia-hopper:py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
+    cache-from = ["type=registry,ref=${DOCKER_REGISTRY_URL}nvidia-hopper:py${python_version}-torch${torch_version}-cuda${NVIDIA_CUDA_VERSION}"]
     cache-to   = ["type=inline"]
 }
 

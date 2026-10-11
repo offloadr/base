@@ -7,6 +7,11 @@ on:
         description: "Whether built images should be pushed to the registry"
         required: true
         type: boolean
+      build_hopper:
+        description: "Also build the opt-in FlashAttention 3 images for Hopper GPUs"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-nvidia-cache:
@@ -18,10 +23,8 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - nvidia-cache-py312-torch2100
-          - nvidia-cache-py313-torch2100
-          - nvidia-cache-py312-torch2110
-          - nvidia-cache-py313-torch2110
+          - nvidia-cache-py312-torch2141
+          - nvidia-cache-py313-torch2141
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -67,10 +70,8 @@ jobs:
           - amd-core-py313-torch2100
           - amd-core-py312-torch2110
           - amd-core-py313-torch2110
-          - nvidia-core-py312-torch2100
-          - nvidia-core-py313-torch2100
-          - nvidia-core-py312-torch2110
-          - nvidia-core-py313-torch2110
+          - nvidia-core-py312-torch2141
+          - nvidia-core-py313-torch2141
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -109,22 +110,10 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - nvidia-sageattention-py312-torch2100
-          - nvidia-sageattention-py313-torch2100
-          - nvidia-sageattention-py312-torch2110
-          - nvidia-sageattention-py313-torch2110
-          - nvidia-nunchaku-py312-torch2100
-          - nvidia-nunchaku-py313-torch2100
-          - nvidia-nunchaku-py312-torch2110
-          - nvidia-nunchaku-py313-torch2110
-          - nvidia-xformers-py312-torch2100
-          - nvidia-xformers-py313-torch2100
-          - nvidia-xformers-py312-torch2110
-          - nvidia-xformers-py313-torch2110
-          - nvidia-flashattention-py312-torch2100
-          - nvidia-flashattention-py313-torch2100
-          - nvidia-flashattention-py312-torch2110
-          - nvidia-flashattention-py313-torch2110
+          - nvidia-sageattention-py312-torch2141
+          - nvidia-sageattention-py313-torch2141
+          - nvidia-xformers-py312-torch2141
+          - nvidia-xformers-py313-torch2141
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
@@ -205,10 +194,49 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - nvidia-full-py312-torch2100
-          - nvidia-full-py313-torch2100
-          - nvidia-full-py312-torch2110
-          - nvidia-full-py313-torch2110
+          - nvidia-full-py312-torch2141
+          - nvidia-full-py313-torch2141
+    steps:
+      - uses: actions/checkout@v5
+      - name: Pre-create BuildKit volume on /mnt
+        run: |
+          sudo mkdir -p /mnt/buildkit-state
+          sudo docker volume create \
+            --driver local \
+            --opt type=none \
+            --opt device=/mnt/buildkit-state \
+            --opt o=bind \
+            buildx_buildkit_ci0_state
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: ci
+      - name: Log in to registry
+        if: ${{ inputs.push_images }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build ${{ matrix.target }}
+        uses: docker/bake-action@v7
+        with:
+          push: ${{ inputs.push_images }}
+          targets: ${{ matrix.target }}
+
+  build-nvidia-hopper:
+    if: ${{ inputs.build_hopper }}
+    needs: [build-nvidia-full]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - nvidia-hopper-py312-torch2141
+          - nvidia-hopper-py313-torch2141
     steps:
       - uses: actions/checkout@v5
       - name: Pre-create BuildKit volume on /mnt
