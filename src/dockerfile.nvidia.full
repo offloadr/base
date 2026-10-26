@@ -15,4 +15,5 @@ RUN --mount=type=cache,id=offloadr-nvidia-full-uv-build,target=/root/.cache/uv-b
         --no-deps \
         --no-index \
         /tmp/offloadr-wheels/*/*.whl && \
-    PYTHONDONTWRITEBYTECODE=1 ${OFFLOADR_VENV}/bin/python -c "import torch, torchvision, torchaudio, xformers.ops, sageattention; from sageattention.sm80_compile import _qattn_sm80; assert xformers._has_cpp_library"
+    PYTHONDONTWRITEBYTECODE=1 ${OFFLOADR_VENV}/bin/python -c "import torch, torchvision, torchaudio, xformers.ops, sageattention; from sageattention.sm80_compile import _qattn_sm80; assert xformers._has_cpp_library" && \
+    uv pip check --python ${OFFLOADR_VENV}/bin/python

@@ -4,6 +4,7 @@ FROM ${CUDA_DEVEL_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
 ARG PYTHON_VERSION
+ARG PYTHON_INSTALL_VERSION
 ARG UV_VERSION
 ARG TORCH_VERSION
 ARG TORCHVISION_VERSION
@@ -11,6 +12,7 @@ ARG TORCHAUDIO_VERSION
 ARG TORCH_FLAVOR
 
 RUN test -n "${PYTHON_VERSION}" && \
+    test -n "${PYTHON_INSTALL_VERSION}" && \
     test -n "${UV_VERSION}" && \
     test -n "${TORCH_VERSION}" && \
     test -n "${TORCHVISION_VERSION}" && \
@@ -34,24 +36,28 @@ ENV UV_CACHE_DIR=/cache/uv
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python
 ENV UV_PYTHON_BIN_DIR=/usr/local/bin
+ENV OFFLOADR_PYTHON_VERSION=${PYTHON_INSTALL_VERSION}
+COPY check-python.py /opt/offloadr/check-python.py
 ENV OFFLOADR_BUILDER_VENV=/opt/builder-venv
 ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
 ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
 ENV OFFLOADR_TORCHAUDIO_VERSION=${TORCHAUDIO_VERSION}
 ENV OFFLOADR_TORCH_FLAVOR=${TORCH_FLAVOR}
+ENV UV_TORCH_BACKEND=${TORCH_FLAVOR}
 ENV OFFLOADR_TORCH_INDEX_URL=https://download.pytorch.org/whl/${TORCH_FLAVOR}
 ENV UV_CONSTRAINT=/opt/offloadr/constraints/torch-stack.txt
 ENV VIRTUAL_ENV=${OFFLOADR_BUILDER_VENV}
 ENV PATH=${OFFLOADR_BUILDER_VENV}/bin:${PATH}
 RUN mkdir -p /opt/offloadr/constraints && \
-    printf 'torch==%s+%s\ntorchvision==%s+%s\ntorchaudio==%s\n' \
+    printf 'torch==%s+%s\ntorchvision==%s+%s\ntorchaudio==%s+%s\n' \
         "${TORCH_VERSION}" "${TORCH_FLAVOR}" \
-        "${TORCHVISION_VERSION}" "${TORCH_FLAVOR}" "${TORCHAUDIO_VERSION}" \
+        "${TORCHVISION_VERSION}" "${TORCH_FLAVOR}" "${TORCHAUDIO_VERSION}" "${TORCH_FLAVOR}" \
         > ${UV_CONSTRAINT}
 
 # Install uv-managed CPython for extension builds
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    UV_PYTHON_CACHE_DIR=/cache/uv/python uv python install ${PYTHON_VERSION} --default && \
+    UV_PYTHON_CACHE_DIR=/cache/uv/python uv python install ${PYTHON_INSTALL_VERSION} --reinstall --default && \
+    /usr/local/bin/python${PYTHON_VERSION} /opt/offloadr/check-python.py && \
     uv venv --python /usr/local/bin/python${PYTHON_VERSION} ${OFFLOADR_BUILDER_VENV} && \
     ln -sf ${OFFLOADR_BUILDER_VENV}/bin/python /usr/bin/python
 
@@ -64,8 +70,8 @@ RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     --python ${OFFLOADR_BUILDER_VENV}/bin/python \
     torch==${TORCH_VERSION} \
     torchvision==${TORCHVISION_VERSION} \
-    --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR} && \
-    uv pip install --python ${OFFLOADR_BUILDER_VENV}/bin/python torchaudio==${TORCHAUDIO_VERSION}
+    torchaudio==${TORCHAUDIO_VERSION} \
+    --torch-backend ${TORCH_FLAVOR}
 
 RUN ${OFFLOADR_BUILDER_VENV}/bin/python -c "import importlib.metadata as m, os, torch; \
 assert m.version('torch').partition('+')[0] == os.environ['OFFLOADR_TORCH_VERSION']; \
@@ -73,6 +79,12 @@ assert m.version('torchvision').partition('+')[0] == os.environ['OFFLOADR_TORCHV
 assert m.version('torchaudio').partition('+')[0] == os.environ['OFFLOADR_TORCHAUDIO_VERSION']; \
 assert 'cu' + torch.version.cuda.replace('.', '') == os.environ['OFFLOADR_TORCH_FLAVOR']"
 
+COPY requirements.builder.txt /opt/offloadr/requirements.builder.txt
+
 # Install build python packages
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
-    uv pip install --python ${OFFLOADR_BUILDER_VENV}/bin/python ninja wheel packaging
+    uv pip install --python ${OFFLOADR_BUILDER_VENV}/bin/python --requirement /opt/offloadr/requirements.builder.txt
+
+# Exercise the interpreter selected by the venv, not just the system command.
+RUN ${OFFLOADR_BUILDER_VENV}/bin/python /opt/offloadr/check-python.py && \
+    uv pip check --python ${OFFLOADR_BUILDER_VENV}/bin/python

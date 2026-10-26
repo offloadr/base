@@ -12,4 +12,5 @@ RUN --mount=type=cache,id=offloadr-nvidia-hopper-uv-build,target=/root/.cache/uv
     UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
         --python ${OFFLOADR_VENV}/bin/python \
         /tmp/offloadr-wheels/flashattention/*.whl && \
-    PYTHONDONTWRITEBYTECODE=1 ${OFFLOADR_VENV}/bin/python -c "import flash_attn_interface"
+    PYTHONDONTWRITEBYTECODE=1 ${OFFLOADR_VENV}/bin/python -c "import flash_attn_interface" && \
+    uv pip check --python ${OFFLOADR_VENV}/bin/python

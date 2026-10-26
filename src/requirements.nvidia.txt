@@ -1,0 +1,12 @@
+# Direct runtime dependencies audited against PyPI on 2026-10-26.
+# Keep these as install inputs, not inherited constraints: applications may
+# need their own compatible versions. The Torch stack stays constrained.
+diffusers==0.42.0
+transformers==5.20.2
+huggingface-hub==2.3.0
+accelerate==1.15.0
+peft==0.21.2
+sentencepiece==0.2.2
+protobuf==7.36.2
+torchsde==0.2.6
+einops==0.8.2

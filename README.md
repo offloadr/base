@@ -14,21 +14,15 @@ The public image contract is:
 
 ## Default tags
 
-The default tags use Python 3.12 and 3.13. NVIDIA uses PyTorch 2.14.1 with CUDA
-13.0.3; CPU and AMD use PyTorch 2.10.0 and 2.11.0:
+The default tags use Python 3.12 and 3.13 with PyTorch 2.14.1. NVIDIA uses
+CUDA 13.0.3; AMD uses ROCm 7.2.4:
 
-* `cpu-core:py3.12-torch2.10.0-cpu`
-* `cpu-core:py3.13-torch2.10.0-cpu`
-* `cpu-core:py3.12-torch2.11.0-cpu`
-* `cpu-core:py3.13-torch2.11.0-cpu`
-* `amd-core:py3.12-torch2.10.0-rocm7.1.1`
-* `amd-core:py3.13-torch2.10.0-rocm7.1.1`
-* `amd-core:py3.12-torch2.11.0-rocm7.2.3`
-* `amd-core:py3.13-torch2.11.0-rocm7.2.3`
-* `amd-full:py3.12-torch2.10.0-rocm7.1.1`
-* `amd-full:py3.13-torch2.10.0-rocm7.1.1`
-* `amd-full:py3.12-torch2.11.0-rocm7.2.3`
-* `amd-full:py3.13-torch2.11.0-rocm7.2.3`
+* `cpu-core:py3.12-torch2.14.1-cpu`
+* `cpu-core:py3.13-torch2.14.1-cpu`
+* `amd-core:py3.12-torch2.14.1-rocm7.2.4`
+* `amd-core:py3.13-torch2.14.1-rocm7.2.4`
+* `amd-full:py3.12-torch2.14.1-rocm7.2.4`
+* `amd-full:py3.13-torch2.14.1-rocm7.2.4`
 * `nvidia-core:py3.12-torch2.14.1-cuda13.0.3`
 * `nvidia-core:py3.13-torch2.14.1-cuda13.0.3`
 * `nvidia-full:py3.12-torch2.14.1-cuda13.0.3`
@@ -40,10 +34,11 @@ All published runtime images are expected to provide:
 
 * `WORKDIR /workspace`
 * `python` command backed by uv-managed CPython
-* `uv` 0.11.12
+* `uv` 0.13.5
 * built-in virtual environment at `/opt/venv` with the base Python packages
 * `UV_CONSTRAINT=/opt/offloadr/constraints/torch-stack.txt` to pin `torch`,
   `torchvision`, and `torchaudio`
+* `UV_TORCH_BACKEND` set to the image's CPU/CUDA/ROCm flavor
 
 ## AMD variants
 
@@ -83,8 +78,8 @@ Hosts below CUDA 13.0 need a separately maintained older runtime.
 explains driver requirements and PTX/JIT limitations.
 
 PyTorch and torchvision are pinned to their `cu130` wheels, including the CUDA
-suffix in the inherited constraints. TorchAudio 2.11.0 is installed separately
-from PyPI: [it supports PyTorch 2.11 and later](https://github.com/pytorch/audio).
+suffix in the inherited constraints. TorchAudio 2.11.0 uses the same index and
+[supports PyTorch 2.11 and later](https://github.com/pytorch/audio).
 xFormers and optional FlashAttention 3 use stable-ABI CUDA 13 wheels published
 in the `cu130` index; SageAttention is built with the CUDA 13.0 toolkit. Builds
 check package versions, Torch's CUDA flavor and accelerator imports without
@@ -92,10 +87,16 @@ requiring a GPU. Actual attention kernels still need GPU validation.
 
 ## Building
 
+Run a quick local check with the CPU images:
+
+```shell
+docker buildx bake cpu-core --pull --load
+```
+
 Build the standard images locally:
 
 ```shell
-docker buildx bake
+docker buildx bake --pull
 ```
 
 Build a specific image:

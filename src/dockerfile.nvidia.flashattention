@@ -2,7 +2,7 @@ FROM builder
 
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
-ARG FLASH_ATTENTION_VERSION=3.0.0
+ARG FLASH_ATTENTION_VERSION=3.0.1
 
 # Download the prebuilt FlashAttention 3 wheel for the CUDA 13 family
 # These stable-ABI CUDA 13 wheels are published in the cu130 index.
@@ -11,7 +11,7 @@ ARG WHEEL_TORCH_FLAVOR=cu130
 RUN --mount=type=cache,target=/cache/uv,sharing=locked \
     mkdir -p /artifacts/flashattention/dist && \
     export CUDA_TAG=${WHEEL_TORCH_FLAVOR} && \
-    export FLASH_ATTENTION_WHEEL=flash_attn_3-${FLASH_ATTENTION_VERSION}-cp39-abi3-manylinux_2_28_x86_64.whl && \
+    export FLASH_ATTENTION_WHEEL=flash_attn_3-${FLASH_ATTENTION_VERSION}-cp310-abi3-manylinux_2_28_x86_64.whl && \
     python - <<'PY'
 import os
 import pathlib

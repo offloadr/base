@@ -4,14 +4,27 @@ variable "DOCKER_REGISTRY_URL" {
 variable "PYTHON_VERSIONS" {
     default = ["3.12", "3.13"]
 }
+# Exact patches from the 20261021 standalone builds embedded in uv 0.13.5.
+variable "PYTHON_INSTALL_VERSIONS" {
+    default = {
+        "3.12" = "3.12.15"
+        "3.13" = "3.13.17"
+    }
+}
 variable "CPU_RUNTIME_IMAGE" {
     default = "ubuntu:24.04"
 }
 variable "UV_VERSION" {
-    default = "0.11.12"
+    default = "0.13.5"
 }
 variable "TORCH_VERSIONS" {
-    default = ["2.10.0", "2.11.0"]
+    default = ["2.14.1"]
+}
+# TorchAudio 2.11 supports Torch 2.11 and all later releases.
+variable "TORCHAUDIO_VERSIONS" {
+    default = {
+        "2.14.1" = "2.11.0"
+    }
 }
 # Keep NVIDIA's CUDA wheel matrix independent from the CPU/ROCm releases.
 variable "NVIDIA_TORCH_VERSIONS" {
@@ -22,8 +35,6 @@ variable "NVIDIA_TORCHAUDIO_VERSION" {
 }
 variable "TORCHVISION_VERSIONS" {
     default = {
-        "2.10.0" = "0.25.0"
-        "2.11.0" = "0.26.0"
         "2.14.1" = "0.29.1"
     }
 }
@@ -45,20 +56,17 @@ variable "NVIDIA_EXTENSION_WHEEL_FLAVOR" {
 }
 variable "AMD_ROCM_VERSIONS" {
     default = {
-        "2.10.0" = "7.1.1"
-        "2.11.0" = "7.2.3"
+        "2.14.1" = "7.2.4"
     }
 }
 variable "AMD_ROCM_IMAGES" {
     default = {
-        "2.10.0" = "rocm/dev-ubuntu-24.04:7.1.1"
-        "2.11.0" = "rocm/dev-ubuntu-24.04:7.2.3"
+        "2.14.1" = "rocm/dev-ubuntu-24.04:7.2.4"
     }
 }
 variable "AMD_TORCH_FLAVORS" {
     default = {
-        "2.10.0" = "rocm7.1"
-        "2.11.0" = "rocm7.2"
+        "2.14.1" = "rocm7.2"
     }
 }
 variable "CPU_TORCH_FLAVOR" {
@@ -93,6 +101,7 @@ target "nvidia-cache" {
     args = {
         CUDA_DEVEL_IMAGE = "${NVIDIA_CUDA_DEVEL_IMAGE}"
         PYTHON_VERSION   = python_version
+        PYTHON_INSTALL_VERSION = PYTHON_INSTALL_VERSIONS[python_version]
         UV_VERSION       = "${UV_VERSION}"
         TORCH_VERSION    = torch_version
         TORCHVISION_VERSION = TORCHVISION_VERSIONS[torch_version]
@@ -179,6 +188,7 @@ target "nvidia-core" {
     args = {
         CUDA_RUNTIME_IMAGE = "${NVIDIA_CUDA_RUNTIME_IMAGE}"
         PYTHON_VERSION     = python_version
+        PYTHON_INSTALL_VERSION = PYTHON_INSTALL_VERSIONS[python_version]
         UV_VERSION         = "${UV_VERSION}"
         TORCH_VERSION      = torch_version
         TORCHVISION_VERSION = TORCHVISION_VERSIONS[torch_version]
@@ -246,9 +256,11 @@ target "cpu-core" {
     args = {
         CPU_RUNTIME_IMAGE = "${CPU_RUNTIME_IMAGE}"
         PYTHON_VERSION    = python_version
+        PYTHON_INSTALL_VERSION = PYTHON_INSTALL_VERSIONS[python_version]
         UV_VERSION        = "${UV_VERSION}"
         TORCH_VERSION     = torch_version
         TORCHVISION_VERSION = TORCHVISION_VERSIONS[torch_version]
+        TORCHAUDIO_VERSION = TORCHAUDIO_VERSIONS[torch_version]
         TORCH_FLAVOR      = "${CPU_TORCH_FLAVOR}"
     }
     platforms  = ["linux/amd64"]
@@ -268,9 +280,11 @@ target "amd-core" {
     args = {
         ROCM_IMAGE      = AMD_ROCM_IMAGES[torch_version]
         PYTHON_VERSION  = python_version
+        PYTHON_INSTALL_VERSION = PYTHON_INSTALL_VERSIONS[python_version]
         UV_VERSION      = "${UV_VERSION}"
         TORCH_VERSION   = torch_version
         TORCHVISION_VERSION = TORCHVISION_VERSIONS[torch_version]
+        TORCHAUDIO_VERSION = TORCHAUDIO_VERSIONS[torch_version]
         TORCH_FLAVOR    = AMD_TORCH_FLAVORS[torch_version]
     }
     platforms  = ["linux/amd64"]

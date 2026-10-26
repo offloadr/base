@@ -6,6 +6,7 @@ FROM ${CUDA_RUNTIME_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/offloadr/base"
 
 ARG PYTHON_VERSION
+ARG PYTHON_INSTALL_VERSION
 ARG UV_VERSION
 ARG TORCH_VERSION
 ARG TORCHVISION_VERSION
@@ -13,6 +14,7 @@ ARG TORCHAUDIO_VERSION
 ARG TORCH_FLAVOR
 
 RUN test -n "${PYTHON_VERSION}" && \
+    test -n "${PYTHON_INSTALL_VERSION}" && \
     test -n "${UV_VERSION}" && \
     test -n "${TORCH_VERSION}" && \
     test -n "${TORCHVISION_VERSION}" && \
@@ -35,8 +37,11 @@ RUN tar -xzf /tmp/uv.tar.gz --strip-components=1 && \
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python
 ENV UV_PYTHON_BIN_DIR=/usr/local/bin
+ENV OFFLOADR_PYTHON_VERSION=${PYTHON_INSTALL_VERSION}
+COPY check-python.py /opt/offloadr/check-python.py
 RUN --mount=type=cache,id=offloadr-nvidia-core-uv-python,target=/root/.cache/uv,sharing=locked \
-    UV_PYTHON_CACHE_DIR=/root/.cache/uv/python uv python install ${PYTHON_VERSION} --default && \
+    UV_PYTHON_CACHE_DIR=/root/.cache/uv/python uv python install ${PYTHON_INSTALL_VERSION} --reinstall --default && \
+    /usr/local/bin/python${PYTHON_VERSION} /opt/offloadr/check-python.py && \
     ln -sf /usr/local/bin/python${PYTHON_VERSION} /usr/bin/python
 
 # Configure uv for user-local runtime installs and expose the built-in venv
@@ -45,15 +50,18 @@ ENV OFFLOADR_TORCH_VERSION=${TORCH_VERSION}
 ENV OFFLOADR_TORCHVISION_VERSION=${TORCHVISION_VERSION}
 ENV OFFLOADR_TORCHAUDIO_VERSION=${TORCHAUDIO_VERSION}
 ENV OFFLOADR_TORCH_FLAVOR=${TORCH_FLAVOR}
+ENV UV_TORCH_BACKEND=${TORCH_FLAVOR}
 ENV OFFLOADR_TORCH_INDEX_URL=https://download.pytorch.org/whl/${TORCH_FLAVOR}
 ENV UV_CONSTRAINT=/opt/offloadr/constraints/torch-stack.txt
 RUN mkdir -p /opt/offloadr/constraints && \
-    printf 'torch==%s+%s\ntorchvision==%s+%s\ntorchaudio==%s\n' \
+    printf 'torch==%s+%s\ntorchvision==%s+%s\ntorchaudio==%s+%s\n' \
         "${TORCH_VERSION}" "${TORCH_FLAVOR}" \
-        "${TORCHVISION_VERSION}" "${TORCH_FLAVOR}" "${TORCHAUDIO_VERSION}" \
+        "${TORCHVISION_VERSION}" "${TORCH_FLAVOR}" "${TORCHAUDIO_VERSION}" "${TORCH_FLAVOR}" \
         > ${UV_CONSTRAINT}
 
 WORKDIR /workspace
+
+COPY requirements.nvidia.txt /opt/offloadr/requirements.nvidia.txt
 
 # Populate the built-in venv
 RUN --mount=type=cache,id=offloadr-nvidia-core-uv-build,target=/root/.cache/uv-build,sharing=locked \
@@ -62,24 +70,21 @@ RUN --mount=type=cache,id=offloadr-nvidia-core-uv-build,target=/root/.cache/uv-b
         --python ${OFFLOADR_VENV}/bin/python \
         torch==${TORCH_VERSION} \
         torchvision==${TORCHVISION_VERSION} \
-        --index-url https://download.pytorch.org/whl/${TORCH_FLAVOR} && \
+        torchaudio==${TORCHAUDIO_VERSION} \
+        --torch-backend ${TORCH_FLAVOR} && \
     UV_CACHE_DIR=/root/.cache/uv-build uv pip install \
         --python ${OFFLOADR_VENV}/bin/python \
-        torchaudio==${TORCHAUDIO_VERSION} \
-        diffusers \
-        transformers \
-        huggingface-hub \
-        accelerate \
-        peft \
-        sentencepiece \
-        protobuf \
-        torchsde \
-        einops && \
+        --requirement /opt/offloadr/requirements.nvidia.txt && \
     ${OFFLOADR_VENV}/bin/python -m compileall -q ${OFFLOADR_VENV} && \
     chmod -R u=rwX,go=rX ${OFFLOADR_VENV}
 
-RUN ${OFFLOADR_VENV}/bin/python -c "import importlib.metadata as m, os, torch; \
+RUN ${OFFLOADR_VENV}/bin/python -c "import importlib.metadata as m, os, torch, torchvision, torchaudio; \
+import diffusers, transformers, huggingface_hub, accelerate, peft, sentencepiece, google.protobuf, torchsde, einops; \
 assert m.version('torch').partition('+')[0] == os.environ['OFFLOADR_TORCH_VERSION']; \
 assert m.version('torchvision').partition('+')[0] == os.environ['OFFLOADR_TORCHVISION_VERSION']; \
 assert m.version('torchaudio').partition('+')[0] == os.environ['OFFLOADR_TORCHAUDIO_VERSION']; \
 assert 'cu' + torch.version.cuda.replace('.', '') == os.environ['OFFLOADR_TORCH_FLAVOR']"
+
+# Exercise the interpreter selected by the venv, not just the system command.
+RUN ${OFFLOADR_VENV}/bin/python /opt/offloadr/check-python.py && \
+    uv pip check --python ${OFFLOADR_VENV}/bin/python
